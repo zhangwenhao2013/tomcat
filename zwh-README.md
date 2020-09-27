@@ -8,3 +8,9 @@ Error:(139, 58) java: -source 1.5 中不支持 diamond 运算符
 3:修改model jdk版本
 
 4:删除test类中的报错.
+
+
+因为 Tomcat 源码没有 main方法 所以需要配置
+
+Main Class : org.apache.catalina.startup.Bootstrap
+Vm  Options: VmOptions: -/Users/zhangwenhao/openSource/catalina-home
