@@ -1087,12 +1087,18 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         openSocket = false;
         sendfileInProgress = false;
         readComplete = true;
+        /**
+         * 是否是长链接
+         */
         if (endpoint.getUsePolling()) {
             keptAlive = false;
         } else {
             keptAlive = socketWrapper.isKeptAlive();
         }
 
+        /**
+         * 是否禁用 keepAlive : 如果 在忙线程数 超过总线程数的  75%(默认,可以修改) 就会禁用
+         */
         if (disableKeepAlive()) {
             socketWrapper.setKeepAliveLeft(0);
         }
@@ -1105,12 +1111,22 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             try {
                 setRequestLineReadTimeout();
 
+                /**
+                 * 解析请求行
+                 *
+                 * AbstractInputBuffer  内部有 pos , lastValid 脚本 逐字解析
+                 *
+                 * 依次解析出  method , protocol, url 的内容
+                 *
+                 * 并设置给request实例
+                 */
                 if (!getInputBuffer().parseRequestLine(keptAlive)) {
                     if (handleIncompleteRequestLineRead()) {
                         break;
                     }
                 }
 
+                // 请求协议的一些 特定处理
                 // Process the Protocol component of the request line
                 // Need to know if this is an HTTP 0.9 request before trying to
                 // parse headers.
@@ -1125,6 +1141,11 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                     // Set this every time in case limit has been changed via JMX
                     request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());
                     request.getCookies().setLimit(getMaxCookieCount());
+
+                    /**
+                     * 解析请求头
+                     * getInputBuffer().parseHeaders()
+                     */
                     // Currently only NIO will ever return false here
                     // Don't parse headers for HTTP/0.9
                     if (!http09 && !getInputBuffer().parseHeaders()) {
@@ -1187,6 +1208,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                 }
             }
 
+
             if (maxKeepAliveRequests == 1) {
                 keepAlive = false;
             } else if (maxKeepAliveRequests > 0 &&
@@ -1198,6 +1220,11 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             if (!getErrorState().isError()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+                    /**
+                     * 将请求交给Tomcat容器处理
+                     *
+                     * 后续逻辑是 Engine -->host-->context-->wrapper-->servlet
+                     */
                     adapter.service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both
@@ -1250,6 +1277,9 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                     // to be closed occurred.
                     checkExpectationAndResponseStatus();
                 }
+                /**
+                 * 结束请求
+                 */
                 endRequest();
             }
 

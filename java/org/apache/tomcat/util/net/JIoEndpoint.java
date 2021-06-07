@@ -218,6 +218,9 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
                     Socket socket = null;
                     try {
+                        /**
+                         * 像我们自己写socket 编程一样 通过serverSocket.accept()方法获取 socket
+                         */
                         // Accept the next incoming connection from the server
                         // socket
                         socket = serverSocketFactory.acceptSocket(serverSocket);
@@ -230,9 +233,15 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                     }
                     // Successful accept, reset the error delay
                     errorDelay = 0;
-
+                    /**
+                     * 从socketProperties 中获取并设置 socket 参数
+                     */
                     // Configure the socket
                     if (running && !paused && setSocketOptions(socket)) {
+                        /**
+                         * 处理socket
+                         * 没建立一个 Socket 连接 就 交个线程池去管理
+                         */
                         // Hand this socket off to an appropriate processor
                         if (!processSocket(socket)) {
                             countDownConnection();
@@ -301,6 +310,9 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                     SocketState state = SocketState.OPEN;
 
                     try {
+                        /**
+                         *  HTTPS 请求的 SSL 处理
+                         */
                         // SSL handshake
                         serverSocketFactory.handshake(socket.getSocket());
                     } catch (Throwable t) {
@@ -314,6 +326,9 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
                     if ((state != SocketState.CLOSED)) {
                         if (status == null) {
+                            /**
+                             *  正常的请求 应该都会走到这个
+                             */
                             state = handler.process(socket, SocketStatus.OPEN_READ);
                         } else {
                             state = handler.process(socket,status);
@@ -531,6 +546,9 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
             if (!running) {
                 return false;
             }
+            /**
+             * 每建立一个 Socket 连接 就 交个线程池去管理
+             */
             getExecutor().execute(new SocketProcessor(wrapper));
         } catch (RejectedExecutionException x) {
             log.warn("Socket processing request was rejected for:"+socket,x);

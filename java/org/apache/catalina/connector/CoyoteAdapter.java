@@ -448,6 +448,9 @@ public class CoyoteAdapter implements Adapter {
                 //check valves if we support async
                 request.setAsyncSupported(
                         connector.getService().getContainer().getPipeline().isAsyncSupported());
+                /**
+                 * 容器的管道调用
+                 */
                 // Calling the container
                 connector.getService().getContainer().getPipeline().getFirst().invoke(
                         request, response);

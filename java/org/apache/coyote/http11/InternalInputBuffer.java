@@ -99,6 +99,9 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
 
             // Read new bytes if needed
             if (pos >= lastValid) {
+                /**
+                 * fill() 加载
+                 */
                 if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }

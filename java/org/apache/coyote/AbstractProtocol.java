@@ -617,6 +617,13 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     processor = recycledProcessors.poll();
                 }
                 if (processor == null) {
+                    /**
+                     * 不同的顶层实现不一样
+                     *
+                     * BIO  Http11Processor
+                     * NIO
+                     * APR
+                     */
                     processor = createProcessor();
                 }
 
@@ -642,6 +649,9 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                             // loop and call release() which will recycle the
                             // processor (and input buffer) deleting any
                             // pipe-lined data. To avoid this, process it now.
+                            /**
+                             * 交给Processor处理请求
+                             */
                             state = processor.process(wrapper);
                         }
                     } else if (processor.isComet()) {
