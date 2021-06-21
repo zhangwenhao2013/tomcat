@@ -568,6 +568,13 @@ public class Catalina {
         // Before digester - it may be needed
         initNaming();
 
+        /**
+         * 创建 Digester
+         *
+         * 里面添加了很多的 rule
+         * 在解析过程中,会根据这些不同的rule,遇见不同的xml节点反射调用对应的方法,比如:
+         * 创建 StandardServer 实例,复制给catalina  ---> catalina.setServer(StandardServer)等
+         */
         // Create and execute our Digester
         Digester digester = createStartDigester();
 
@@ -576,8 +583,10 @@ public class Catalina {
         File file = null;
         try {
             try {
+                // conf/server.xml
                 file = configFile();
                 inputStream = new FileInputStream(file);
+                //将conf/server.xml对应的URL赋值给InputSource
                 inputSource = new InputSource(file.toURI().toURL().toString());
             } catch (Exception e) {
                 if (log.isDebugEnabled()) {
@@ -632,8 +641,11 @@ public class Catalina {
             }
 
             try {
+                //
                 inputSource.setByteStream(inputStream);
+                // Catalina 作为digester的root ,
                 digester.push(this);
+                // digester 中包含Sax 解析的 XMLReader
                 digester.parse(inputSource);
             } catch (SAXParseException spe) {
                 log.warn("Catalina.start using " + getConfigFile() + ": " +
@@ -652,7 +664,7 @@ public class Catalina {
                 }
             }
         }
-
+        //StandardServer
         getServer().setCatalina(this);
 
         // Stream redirection
@@ -660,6 +672,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            //StandardServer
             getServer().init();
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {

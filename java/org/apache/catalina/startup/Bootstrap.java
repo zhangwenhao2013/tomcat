@@ -70,15 +70,22 @@ public final class Bootstrap {
 
     // -------------------------------------------------------- Private Methods
 
-
+    /**
+     * 根据 catalina.properties 配置初始化 classloader
+     */
     private void initClassLoaders() {
         try {
+
+            // common.loader
+            //common.loader=${catalina.base}/lib,${catalina.base}/lib/*.jar,${catalina.home}/lib,${catalina.home}/lib/*.jar
             commonLoader = createClassLoader("common", null);
             if (commonLoader == null) {
                 // no config file, default to this loader - we might be in a 'single' env.
                 commonLoader = this.getClass().getClassLoader();
             }
+            // server.loader
             catalinaLoader = createClassLoader("server", commonLoader);
+            // shared.loader
             sharedLoader = createClassLoader("shared", commonLoader);
         } catch (Throwable t) {
             handleThrowable(t);
@@ -188,6 +195,7 @@ public final class Bootstrap {
         setCatalinaHome();
         setCatalinaBase();
 
+        // catalinaLoader
         initClassLoaders();
 
         Thread.currentThread().setContextClassLoader(catalinaLoader);
@@ -202,6 +210,11 @@ public final class Bootstrap {
             ("org.apache.catalina.startup.Catalina");
         Object startupInstance = startupClass.newInstance();
 
+        /**
+         * 反射调用
+         * Catalina.setParentClassLoader()方法
+         * startupInstance.setParentClassLoader(sharedLoader)
+         */
         // Set the shared extensions class loader
         if (log.isDebugEnabled())
             log.debug("Setting startup class properties");
@@ -214,6 +227,7 @@ public final class Bootstrap {
             startupInstance.getClass().getMethod(methodName, paramTypes);
         method.invoke(startupInstance, paramValues);
 
+        //Catalina 实例
         catalinaDaemon = startupInstance;
     }
 
@@ -345,6 +359,9 @@ public final class Bootstrap {
         paramValues[0] = Boolean.valueOf(await);
         Method method =
             catalinaDaemon.getClass().getMethod("setAwait", paramTypes);
+        /**
+         * Catalina.setAwait()
+         */
         method.invoke(catalinaDaemon, paramValues);
     }
 
@@ -410,8 +427,18 @@ public final class Bootstrap {
                 args[args.length - 1] = "stop";
                 daemon.stop();
             } else if (command.equals("start")) {
+                /**
+                 * 启动
+                 * 反射的方式调用Catalina 的方法
+                 * Catalina.setAwait
+                 * Catalina.load(启动参数)
+                 * Catalina.start
+                 */
+                //Catalina.setAwait
                 daemon.setAwait(true);
+                //Catalina.load(启动参数)
                 daemon.load(args);
+                //Catalina.start
                 daemon.start();
                 if (null == daemon.getServer()) {
                     System.exit(1);

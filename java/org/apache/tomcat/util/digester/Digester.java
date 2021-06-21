@@ -82,6 +82,7 @@ public class Digester extends DefaultHandler2 {
     protected static IntrospectionUtils.PropertySource propertySource = null;
 
     static {
+        //org.apache.tomcat.util.digester.EnvironmentPropertySource
         String className = System.getProperty("org.apache.tomcat.util.digester.PROPERTY_SOURCE");
         if (className != null) {
             ClassLoader[] cls = new ClassLoader[] {Digester.class.getClassLoader(),Thread.currentThread().getContextClassLoader()};
@@ -1522,6 +1523,9 @@ public class Digester extends DefaultHandler2 {
      */
     public Object parse(InputSource input) throws IOException, SAXException {
         configure();
+        /**
+         * SAX 解析xml
+         */
         getXMLReader().parse(input);
         return root;
     }
